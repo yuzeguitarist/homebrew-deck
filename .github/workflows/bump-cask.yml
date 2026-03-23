@@ -1,0 +1,65 @@
+name: Bump Cask on Deck Release
+
+on:
+  repository_dispatch:
+    types: [deck-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g. v1.3.7)"
+        required: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest Deck release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            TAG="${{ github.event.inputs.version }}"
+          elif [ -n "${{ github.event.client_payload.tag }}" ]; then
+            TAG="${{ github.event.client_payload.tag }}"
+          else
+            TAG=$(gh api repos/yuzeguitarist/Deck/releases/latest --jq '.tag_name')
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected version: $VERSION"
+
+      - name: Download DMG and compute SHA256
+        id: sha
+        run: |
+          curl -fSL -o Deck.dmg \
+            "https://github.com/yuzeguitarist/Deck/releases/download/${{ steps.release.outputs.tag }}/Deck.dmg"
+          SHA=$(sha256sum Deck.dmg | awk '{print $1}')
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "SHA256: $SHA"
+          rm Deck.dmg
+
+      - name: Update cask file
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
+          CURRENT=$(grep '  version "' deckclip.rb | sed 's/.*version "//;s/"//')
+          if [ "$CURRENT" = "$VERSION" ]; then
+            echo "Already up to date ($VERSION), skipping."
+            exit 0
+          fi
+          sed -i "s/  version \".*\"/  version \"$VERSION\"/" deckclip.rb
+          sed -i "s/  sha256 \".*\"/  sha256 \"$SHA\"/" deckclip.rb
+          echo "updated=true" >> "$GITHUB_ENV"
+
+      - name: Commit and push
+        if: env.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deckclip.rb
+          git commit -m "deckclip ${{ steps.release.outputs.version }}"
+          git push
