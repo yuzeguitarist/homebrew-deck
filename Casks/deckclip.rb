@@ -1,6 +1,6 @@
 cask "deckclip" do
-  version "1.4.0"
-  sha256 "a5d9753fa0bb9e442ce431fe53e83fae51f83326cb7d57bc555e66eb85c3478f"
+  version "1.4.1"
+  sha256 "007d3d80ec9430ffa36e5518e51e503f2ba5a5b5ea31c47d72ba915710fbfb7a"
 
   url "https://github.com/yuzeguitarist/Deck/releases/download/v#{version}/Deck.dmg",
       verified: "github.com/yuzeguitarist/Deck/"
