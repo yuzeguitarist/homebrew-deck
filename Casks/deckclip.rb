@@ -2,8 +2,7 @@ cask "deckclip" do
   version "1.4.6"
   sha256 "540d4cc0a655afd411773cb323849d8356fea0cd69d450c837b7ff4ccdb3c4e7"
 
-  url "https://github.com/yuzeguitarist/Deck/releases/download/v#{version}/Deck.dmg",
-      verified: "github.com/yuzeguitarist/Deck/"
+  url "https://github.com/yuzeguitarist/Deck/releases/download/v#{version}/Deck.dmg"
   name "Deck"
   desc "Privacy-first clipboard manager"
   homepage "https://deckclip.app/"
